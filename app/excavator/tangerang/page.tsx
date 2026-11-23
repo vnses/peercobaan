@@ -1,17 +1,1412 @@
-import Link from "next/link";
+'use client';
 
-export default function TangerangPage() {
+import React, { useState, useEffect } from 'react';
+import { 
+  Phone, 
+  MessageCircle, 
+  Menu, 
+  X, 
+  CheckCircle2, 
+  ShieldCheck, 
+  Clock, 
+  Truck, 
+  MapPin, 
+  Wrench, 
+  ChevronDown, 
+  ChevronRight, 
+  ChevronLeft,
+  HardHat,
+  Layers,
+  Hammer,
+  Trees,
+  Building2,
+  Compass,
+  ArrowRight,
+  Info,
+  HelpCircle,
+  ExternalLink
+} from 'lucide-react';
+
+/**
+ * KONFIGURASI WHATSAPP & IDENTITAS BRAND
+ * Catatan: Ganti NOMORWHATSAPP dengan nomor WhatsApp resmi (format: 62812xxxx)
+ */
+const WHATSAPP_NUMBER = "62NOMORWHATSAPP"; 
+
+const createWhatsAppLink = (message: string) => {
+  const encodedMessage = encodeURIComponent(message);
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+};
+
+// Komponen Ikon Excavator Custom (Identitas Visual TERAXCA)
+const ExcavatorLogoIcon = ({ className = "w-8 h-8" }) => (
+  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="6" y="44" width="38" height="10" rx="5" fill="#1E242B" />
+    <circle cx="13" cy="49" r="2.5" fill="#F5B800" />
+    <circle cx="25" cy="49" r="2.5" fill="#F5B800" />
+    <circle cx="37" cy="49" r="2.5" fill="#F5B800" />
+    <path d="M10 42H38V30C38 27.7909 36.2091 26 34 26H16C12.6863 26 10 28.6863 10 32V42Z" fill="#F5B800" />
+    <path d="M22 26H33V35H22V26Z" fill="#1E242B" />
+    <path d="M36 33L48 16L58 26" stroke="#1E242B" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M58 26L53 35L60 38L62 30L58 26Z" fill="#F5B800" stroke="#1E242B" strokeWidth="2" strokeLinejoin="round" />
+  </svg>
+);
+
+// Data Katalog Alat Berat (Tanpa spesifikasi teknis fiktif)
+const EQUIPMENT_CATALOG = [
+  {
+    id: 'mini-excavator',
+    name: 'Mini Excavator',
+    category: 'Compact Series',
+    image: 'https://images.unsplash.com/photo-1580901368919-7738efb0f87e?auto=format&fit=crop&q=80&w=800',
+    description: 'Alat gali berukuran ringkas dengan manuver lincah untuk area kerja dengan akses terbatas.',
+    usage: 'Galian pondasi rumah, saluran drainase, perataan halaman, dan proyek pemukiman.',
+    waMessage: 'Hallo TERAXCA, saya tertarik menyewa Mini Excavator. Mohon informasi harga dan ketersediaan unit.'
+  },
+  {
+    id: 'excavator-standard',
+    name: 'Excavator Standard',
+    category: 'Heavy Duty Series',
+    image: 'https://images.unsplash.com/photo-1579412690850-bd41cd0af397?auto=format&fit=crop&q=80&w=800',
+    description: 'Unit excavator serbaguna dengan kapasitas kerja optimal untuk berbagai skala proyek konstruksi.',
+    usage: 'Pekerjaan cut & fill, galian basement, pemuatan material ke dump truck, dan infrastruktur.',
+    waMessage: 'Hallo TERAXCA, saya tertarik menyewa Excavator Standard. Mohon informasi harga dan ketersediaan unit.'
+  },
+  {
+    id: 'excavator-long-arm',
+    name: 'Excavator Long Arm',
+    category: 'Extended Reach',
+    image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=800',
+    description: 'Dilengkapi lengan jangkauan ekstra panjang untuk pekerjaan pengerukan jarak jauh atau kedalaman khusus.',
+    usage: 'Normalisasi sungai, pengerukan waduk/kolam, perapihan tebing, dan area sulit dijangkau.',
+    waMessage: 'Hallo TERAXCA, saya tertarik menyewa Excavator Long Arm. Mohon informasi harga dan ketersediaan unit.'
+  },
+  {
+    id: 'excavator-breaker',
+    name: 'Excavator Breaker',
+    category: 'Demolition Series',
+    image: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=800',
+    description: 'Excavator dengan attachment hydraulic breaker khusus untuk penghancuran material keras.',
+    usage: 'Pembongkaran struktur beton, penghancuran batu besar, pembobokan jalan, dan demolisi gedung.',
+    waMessage: 'Hallo TERAXCA, saya tertarik menyewa Excavator Breaker. Mohon informasi harga dan ketersediaan unit.'
+  },
+  {
+    id: 'bulldozer',
+    name: 'Bulldozer',
+    category: 'Earthmoving Series',
+    image: 'https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&q=80&w=800',
+    description: 'Alat berat bertenaga dorong tinggi untuk pembukaan dan pemerataan lahan secara efisien.',
+    usage: 'Land clearing (pembersihan lahan), perataan timbunan tanah, dan pembukaan akses jalan proyek.',
+    waMessage: 'Hallo TERAXCA, saya tertarik menyewa Bulldozer. Mohon informasi harga dan ketersediaan unit.'
+  },
+  {
+    id: 'vibro-roller',
+    name: 'Vibro Roller',
+    category: 'Compaction Series',
+    image: 'https://images.unsplash.com/photo-1590496793929-36417d3117de?auto=format&fit=crop&q=80&w=800',
+    description: 'Alat pemadat tanah dengan sistem getar untuk menghasilkan kepadatan permukaan yang maksimal.',
+    usage: 'Pemadatan tanah urugan, persiapan lapisan dasar jalan raya, area parkir, dan kawasan industri.',
+    waMessage: 'Hallo TERAXCA, saya tertarik menyewa Vibro Roller. Mohon informasi harga dan ketersediaan unit.'
+  }
+];
+
+// Data Keunggulan
+const ADVANTAGES = [
+  {
+    icon: ShieldCheck,
+    title: 'Harga Kompetitif',
+    desc: 'Pilihan penyewaan alat berat dengan penawaran harga yang disesuaikan kebutuhan proyek.'
+  },
+  {
+    icon: HardHat,
+    title: 'Pilihan Unit Excavator',
+    desc: 'Tersedia pilihan jenis dan ukuran excavator sesuai kebutuhan pekerjaan.'
+  },
+  {
+    icon: CheckCircle2,
+    title: 'Operator Berpengalaman',
+    desc: 'Dukungan operator profesional sesuai ketersediaan mitra penyedia.'
+  },
+  {
+    icon: MessageCircle,
+    title: 'Respon Cepat',
+    desc: 'Konsultasi dan permintaan penawaran dapat dilakukan dengan mudah melalui WhatsApp.'
+  },
+  {
+    icon: Truck,
+    title: 'Layanan Pengiriman',
+    desc: 'Koordinasi pengiriman unit menuju lokasi proyek sesuai kesepakatan.'
+  },
+  {
+    icon: MapPin,
+    title: 'Area Layanan Strategis',
+    desc: 'Fokus pelayanan Tangerang, Banten dan area sekitarnya.'
+  }
+];
+
+// Data Layanan Pekerjaan
+const SERVICES = [
+  {
+    icon: Layers,
+    title: 'Penggalian Pondasi',
+    desc: 'Pengerjaan galian struktur pondasi bangunan residensial, ruko, gudang, maupun gedung bertingkat secara presisi.'
+  },
+  {
+    icon: Compass,
+    title: 'Cut & Fill',
+    desc: 'Pemotongan bagian tanah tinggi dan pengurugan area cekung untuk mencapai elevasi lahan yang direncanakan.'
+  },
+  {
+    icon: Building2,
+    title: 'Perataan dan Pematangan Lahan',
+    desc: 'Persiapan kontur lahan agar siap bangun untuk kawasan perumahan, pabrik, maupun fasilitas komersial.'
+  },
+  {
+    icon: Hammer,
+    title: 'Pembongkaran Bangunan',
+    desc: 'Jasa demolisi bangunan lama, pembobokan beton, serta pembersihan puing struktur menggunakan unit breaker.'
+  },
+  {
+    icon: Trees,
+    title: 'Pembersihan Lahan',
+    desc: 'Land clearing untuk membersihkan semak belukar, pepohonan, dan sisa material sebelum tahap konstruksi dimulai.'
+  },
+  {
+    icon: Wrench,
+    title: 'Pekerjaan Konstruksi dan Infrastruktur',
+    desc: 'Dukungan alat berat untuk pembuatan saluran drainase, akses jalan proyek, normalisasi saluran, dan pekerjaan sipil.'
+  }
+];
+
+// Data Langkah Pemesanan
+const ORDER_STEPS = [
+  {
+    step: '01',
+    title: 'Konsultasi Kebutuhan',
+    desc: 'Hubungi tim kami melalui WhatsApp dan jelaskan kebutuhan proyek Anda.'
+  },
+  {
+    step: '02',
+    title: 'Tentukan Jenis Unit',
+    desc: 'Pilih jenis excavator atau alat berat sesuai pekerjaan.'
+  },
+  {
+    step: '03',
+    title: 'Dapatkan Penawaran',
+    desc: 'Kami membantu mengoordinasikan penawaran harga berdasarkan kebutuhan dan lokasi proyek.'
+  },
+  {
+    step: '04',
+    title: 'Konfirmasi Pemesanan',
+    desc: 'Lakukan konfirmasi setelah detail penyewaan dan kesepakatan selesai.'
+  }
+];
+
+// Daftar Area Layanan Tangerang & Sekitarnya
+const SERVICE_AREAS = [
+  'Kota Tangerang',
+  'Kabupaten Tangerang',
+  'Tangerang Selatan',
+  'BSD City',
+  'Serpong',
+  'Balaraja',
+  'Cikupa',
+  'Curug',
+  'Legok',
+  'Tigaraksa',
+  'Pasar Kemis',
+  'Cisauk'
+];
+
+// Data FAQ
+const FAQ_ITEMS = [
+  {
+    question: 'Berapa harga sewa excavator?',
+    answer: 'Harga sewa excavator bervariasi tergantung pada jenis unit (Mini, Standard, Long Arm, atau Breaker), durasi penyewaan, serta lokasi proyek Anda. Silakan hubungi tim kami melalui WhatsApp untuk mendapatkan rincian penawaran harga sesuai kebutuhan proyek.'
+  },
+  {
+    question: 'Apakah bisa menyewa excavator per jam atau per hari?',
+    answer: 'Sistem durasi penyewaan bersifat fleksibel dan menyesuaikan ketentuan minimum sewa dari mitra penyedia unit kami. Anda dapat mengonsultasikan estimasi durasi pekerjaan proyek Anda kepada tim kami untuk mendapatkan opsi paket terbaik.'
+  },
+  {
+    question: 'Apakah tersedia operator excavator?',
+    answer: 'Ya, penyewaan unit dapat dilengkapi dengan dukungan operator berpengalaman sesuai dengan ketersediaan mitra penyedia dan kesepakatan paket sewa di awal.'
+  },
+  {
+    question: 'Apakah biaya mobilisasi sudah termasuk harga sewa?',
+    answer: 'Umumnya biaya mobilisasi dan demobilisasi (pengiriman unit pulang-pergi menggunakan truk towing/self-loader) dihitung terpisah menyesuaikan jarak lokasi proyek di area Tangerang dan sekitarnya. Rincian akan diinformasikan secara transparan sebelum pemesanan.'
+  },
+  {
+    question: 'Apakah TERAXCA melayani area Tangerang Selatan?',
+    answer: 'Ya, kami melayani seluruh wilayah Tangerang Raya meliputi Kota Tangerang, Kabupaten Tangerang, dan Tangerang Selatan (BSD City, Serpong, Pamulang, Ciputat, Pondok Aren, dan sekitarnya).'
+  },
+  {
+    question: 'Bagaimana cara memesan excavator?',
+    answer: 'Anda cukup menekan tombol WhatsApp di halaman ini, menginformasikan jenis pekerjaan, lokasi proyek, serta rencana jadwal penggunaan. Tim kami akan membantu mengoordinasikan ketersediaan unit dan penawaran harga untuk Anda.'
+  },
+  {
+    question: 'Apakah bisa konsultasi sebelum melakukan pemesanan?',
+    answer: 'Tentu saja. Anda dapat berkonsultasi terlebih dahulu mengenai kondisi lahan dan jenis pekerjaan agar kami dapat membantu merekomendasikan tipe excavator atau alat berat yang paling sesuai.'
+  }
+];
+
+export default function App() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+  const [selectedLocation, setSelectedLocation] = useState('Tangerang');
+  const [activeCatalogIndex, setActiveCatalogIndex] = useState(0);
+
+  // SEO Metadata & Schema Markup Injection (LocalBusiness)
+  useEffect(() => {
+    document.title = "Sewa Excavator Tangerang | TERAXCA – Rental Alat Berat Profesional";
+    
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.name = "description";
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.content = "TERAXCA menyediakan solusi sewa excavator dan alat berat untuk kebutuhan proyek konstruksi, penggalian, dan perataan lahan di Tangerang, Banten dan sekitarnya. Hubungi kami untuk penawaran harga.";
+
+    const scriptId = 'teraxca-schema-ld';
+    let scriptTag = document.getElementById(scriptId);
+    if (!scriptTag) {
+      scriptTag = document.createElement('script');
+      scriptTag.id = scriptId;
+      scriptTag.type = 'application/ld+json';
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "TERAXCA",
+      "url": "https://teraxca.com",
+      "description": "Solusi penyewaan excavator dan alat berat untuk kebutuhan proyek konstruksi, penggalian tanah, dan perataan lahan di Tangerang, Banten dan sekitarnya.",
+      "areaServed": [
+        { "@type": "City", "name": "Tangerang" },
+        { "@type": "City", "name": "Tangerang Selatan" },
+        { "@type": "AdministrativeArea", "name": "Kabupaten Tangerang" },
+        { "@type": "AdministrativeArea", "name": "Banten" }
+      ],
+      "serviceType": [
+        "Sewa Excavator",
+        "Sewa Mini Excavator",
+        "Sewa Excavator Long Arm",
+        "Sewa Excavator Breaker",
+        "Sewa Bulldozer",
+        "Sewa Vibro Roller"
+      ]
+    });
+  }, []);
+
+  // Sticky Header Scroll Listener
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex(openFaqIndex === index ? -1 : index);
+  };
+
+  const scrollToSection = (id: string) => {
+    setIsMobileMenuOpen(false);
+    const element = document.getElementById(id);
+    if (element) {
+      const headerOffset = 80;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const nextCatalog = () => {
+    setActiveCatalogIndex((prev) => (prev + 1) % EQUIPMENT_CATALOG.length);
+  };
+
+  const prevCatalog = () => {
+    setActiveCatalogIndex((prev) => (prev - 1 + EQUIPMENT_CATALOG.length) % EQUIPMENT_CATALOG.length);
+  };
+
   return (
-    <main className="min-h-screen max-w-4xl mx-auto px-6 py-12">
-      <Link href="/" className="text-sm underline">
-        ← Kembali ke Halaman Utama
-      </Link>
-      <h1 className="mt-4 text-3xl font-bold">
-        Sewa Excavator Tangerang
-      </h1>
-      <p className="mt-2">
-        Layanan sewa excavator untuk proyek di wilayah Tangerang dan sekitarnya.
-      </p>
-    </main>
+    <div className="min-h-screen bg-[#FFFFFF] text-[#1E242B] font-sans antialiased selection:bg-[#F5B800] selection:text-[#1E242B]">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+        body {
+          font-family: 'Inter', sans-serif;
+          overflow-x: hidden;
+        }
+        h1, h2, h3, h4, .font-heading {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+      `}</style>
+
+      {/* SECTION 1 – NAVIGATION BAR */}
+      <header 
+        className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-[#FFFFFF]/95 backdrop-blur-md shadow-md border-b border-gray-200/80 py-3' 
+            : 'bg-[#FFFFFF] border-b border-gray-100 py-4'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <a 
+            href="#beranda" 
+            onClick={(e) => { e.preventDefault(); scrollToSection('beranda'); }}
+            className="flex items-center gap-2.5 group focus:outline-none"
+            aria-label="TERAXCA Beranda"
+          >
+            <div className="bg-[#F4F6F8] p-1.5 rounded-xl border border-gray-200 group-hover:border-[#F5B800] transition-colors">
+              <ExcavatorLogoIcon className="w-8 h-8" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-heading font-extrabold text-2xl tracking-tight text-[#1E242B] leading-none">
+                TERA<span className="text-[#F5B800]">X</span>CA
+              </span>
+              <span className="text-[10px] font-semibold tracking-widest uppercase text-gray-500 mt-0.5">
+                Heavy Equipment
+              </span>
+            </div>
+          </a>
+
+          <nav className="hidden lg:flex items-center gap-7" aria-label="Navigasi Utama">
+            {[
+              { label: 'Beranda', id: 'beranda' },
+              { label: 'Alat Berat', id: 'alat-berat' },
+              { label: 'Layanan', id: 'layanan' },
+              { label: 'Harga Sewa', id: 'harga-sewa' },
+              { label: 'Area Layanan', id: 'area-layanan' },
+              { label: 'Tentang Kami', id: 'tentang-kami' },
+              { label: 'Kontak', id: 'kontak' }
+            ].map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                onClick={(e) => { e.preventDefault(); scrollToSection(item.id); }}
+                className="text-sm font-medium text-[#1E242B] hover:text-[#d49e00] transition-colors py-1"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="hidden lg:flex items-center">
+            <a
+              href={createWhatsAppLink("Hallo TERAXCA, saya ingin menanyakan informasi sewa excavator untuk kebutuhan proyek saya.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all transform hover:-translate-y-0.5"
+            >
+              <MessageCircle className="w-4 h-4 fill-current" />
+              Hubungi Kami
+            </a>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden p-2.5 rounded-xl text-[#1E242B] bg-[#F4F6F8] hover:bg-gray-200 transition-colors focus:outline-none"
+            aria-label="Buka Menu Navigasi"
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
+
+        {isMobileMenuOpen && (
+          <div className="lg:hidden bg-[#FFFFFF] border-t border-gray-100 px-4 pt-3 pb-6 shadow-xl">
+            <nav className="flex flex-col space-y-2">
+              {[
+                { label: 'Beranda', id: 'beranda' },
+                { label: 'Alat Berat', id: 'alat-berat' },
+                { label: 'Layanan', id: 'layanan' },
+                { label: 'Harga Sewa', id: 'harga-sewa' },
+                { label: 'Area Layanan', id: 'area-layanan' },
+                { label: 'Tentang Kami', id: 'tentang-kami' },
+                { label: 'Kontak', id: 'kontak' }
+              ].map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  onClick={(e) => { e.preventDefault(); scrollToSection(item.id); }}
+                  className="px-3 py-2.5 rounded-lg text-base font-medium text-[#1E242B] hover:bg-[#F4F6F8] transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
+              <div className="pt-3 border-t border-gray-100">
+                <a
+                  href={createWhatsAppLink("Hallo TERAXCA, saya ingin menanyakan informasi sewa excavator untuk kebutuhan proyek saya.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-base px-5 py-3.5 rounded-xl shadow-sm"
+                >
+                  <MessageCircle className="w-5 h-5 fill-current" />
+                  Hubungi Kami
+                </a>
+              </div>
+            </nav>
+          </div>
+        )}
+      </header>
+
+      <main>
+        {/* SECTION 2 – HERO / MAIN BANNER */}
+        <section id="beranda" className="relative bg-[#1E242B] text-white overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img
+              src="https://images.unsplash.com/photo-1580901368919-7738efb0f87e?auto=format&fit=crop&q=85&w=1920"
+              alt="Excavator bekerja di proyek konstruksi dan penggalian tanah di Tangerang"
+              className="w-full h-full object-cover object-center opacity-40"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1E242B] via-[#1E242B]/90 to-[#1E242B]/50"></div>
+          </div>
+
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-7 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 backdrop-blur-sm">
+                  <span className="w-2 h-2 rounded-full bg-[#F5B800]"></span>
+                  <span className="text-xs sm:text-sm font-heading font-bold tracking-wider uppercase text-[#F5B800]">
+                    SOLUSI SEWA ALAT BERAT TERPERCAYA
+                  </span>
+                </div>
+
+                <h1 className="font-heading font-extrabold text-3xl sm:text-5xl lg:text-[54px] text-white leading-[1.15] tracking-tight">
+                  Sewa Excavator &amp; Alat Berat untuk Proyek Anda
+                </h1>
+
+                <p className="text-base sm:text-lg text-gray-300 leading-relaxed max-w-2xl">
+                  Solusi penyewaan excavator profesional untuk kebutuhan konstruksi, penggalian tanah, perataan lahan, dan berbagai pekerjaan proyek di Tangerang dan sekitarnya.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 pt-2">
+                  <a
+                    href={createWhatsAppLink("Hallo TERAXCA, saya ingin menanyakan informasi sewa excavator untuk kebutuhan proyek saya.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2.5 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-base px-7 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+                  >
+                    <MessageCircle className="w-5 h-5 fill-current" />
+                    Konsultasi via WhatsApp
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('alat-berat')}
+                    className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/25 font-heading font-semibold text-base px-7 py-4 rounded-xl backdrop-blur-sm transition-all"
+                  >
+                    Lihat Pilihan Alat Berat
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="pt-6 border-t border-white/15 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#F5B800]/20 flex items-center justify-center text-[#F5B800] shrink-0">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-200">Pilihan Alat Berat</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#F5B800]/20 flex items-center justify-center text-[#F5B800] shrink-0">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-200">Respon Cepat</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#F5B800]/20 flex items-center justify-center text-[#F5B800] shrink-0">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-200">Area Tangerang &amp; Sekitarnya</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5 hidden lg:block">
+                <div className="relative rounded-2xl overflow-hidden border-2 border-white/15 shadow-2xl bg-[#1E242B]">
+                  <img
+                    src="https://images.unsplash.com/photo-1579412690850-bd41cd0af397?auto=format&fit=crop&q=85&w=900"
+                    alt="Unit Excavator Proyek Konstruksi Tangerang TERAXCA"
+                    className="w-full h-[460px] object-cover"
+                  />
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-[#1E242B] via-[#1E242B]/80 to-transparent p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#F5B800]">
+                          Layanan Kemitraan Alat Berat
+                        </span>
+                        <p className="text-white font-heading font-bold text-lg mt-0.5">
+                          Tangerang &amp; Banten
+                        </p>
+                      </div>
+                      <div className="h-10 w-10 rounded-xl bg-[#F5B800] flex items-center justify-center text-[#1E242B]">
+                        <HardHat className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 3 – TRUST / KEUNGGULAN TERAXCA */}
+        <section id="tentang-kami" className="py-16 sm:py-24 bg-[#FFFFFF]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-14">
+              <div className="inline-block px-3 py-1 rounded-lg bg-[#F4F6F8] text-[#1E242B] text-xs font-heading font-bold uppercase tracking-wider mb-3 border border-gray-200">
+                Keunggulan Layanan
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                Mengapa Memilih TERAXCA?
+              </h2>
+              <p className="mt-4 text-base sm:text-lg text-gray-600 leading-relaxed">
+                Kami membantu Anda mendapatkan solusi penyewaan alat berat yang sesuai dengan kebutuhan proyek.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {ADVANTAGES.map((item, idx) => {
+                const IconComponent = item.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-[#F4F6F8] hover:bg-[#FFFFFF] p-7 rounded-2xl border border-gray-200/80 hover:border-[#F5B800] shadow-sm hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-[#1E242B] group-hover:bg-[#F5B800] text-[#F5B800] group-hover:text-[#1E242B] flex items-center justify-center transition-colors mb-5">
+                      <IconComponent className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-heading font-bold text-xl text-[#1E242B] mb-2.5">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 4 – KATALOG ALAT BERAT */}
+        <section id="alat-berat" className="py-16 sm:py-24 bg-[#F4F6F8] border-y border-gray-200/70">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 text-xs font-heading font-bold uppercase tracking-wider text-[#1E242B] mb-2">
+                  <span className="w-6 h-0.5 bg-[#F5B800]"></span>
+                  Armada &amp; Unit
+                </div>
+                <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                  Pilihan Excavator untuk Kebutuhan Proyek Anda
+                </h2>
+                <p className="mt-3 text-base sm:text-lg text-gray-600">
+                  Temukan jenis alat berat yang sesuai dengan kebutuhan pekerjaan konstruksi dan penggalian.
+                </p>
+              </div>
+
+              <div className="flex md:hidden items-center gap-2 self-end">
+                <button
+                  type="button"
+                  onClick={prevCatalog}
+                  className="p-2.5 rounded-xl bg-white border border-gray-200 text-[#1E242B] hover:border-[#F5B800]"
+                  aria-label="Alat Berat Sebelumnya"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-xs font-semibold text-gray-500 px-2">
+                  {activeCatalogIndex + 1} / {EQUIPMENT_CATALOG.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={nextCatalog}
+                  className="p-2.5 rounded-xl bg-white border border-gray-200 text-[#1E242B] hover:border-[#F5B800]"
+                  aria-label="Alat Berat Berikutnya"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {EQUIPMENT_CATALOG.map((unit) => (
+                <article
+                  key={unit.id}
+                  className="bg-[#FFFFFF] rounded-2xl overflow-hidden border border-gray-200/90 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col"
+                >
+                  <div className="relative h-56 bg-gray-100 overflow-hidden">
+                    <img
+                      src={unit.image}
+                      alt={`Sewa ${unit.name} Tangerang - TERAXCA`}
+                      loading="lazy"
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                    <span className="absolute top-3.5 left-3.5 bg-[#1E242B]/90 backdrop-blur-sm text-[#F5B800] text-xs font-heading font-bold px-3 py-1 rounded-lg">
+                      {unit.category}
+                    </span>
+                  </div>
+
+                  <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-heading font-bold text-xl text-[#1E242B] mb-2">
+                        {unit.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                        {unit.description}
+                      </p>
+                      <div className="bg-[#F4F6F8] p-3.5 rounded-xl mb-6 border border-gray-200/60">
+                        <span className="block text-xs font-heading font-bold uppercase tracking-wider text-[#1E242B] mb-1">
+                          Informasi Penggunaan:
+                        </span>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {unit.usage}
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={createWhatsAppLink(unit.waMessage)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-sm px-5 py-3.5 rounded-xl transition-colors"
+                    >
+                      <MessageCircle className="w-4 h-4 fill-current" />
+                      Tanyakan Harga
+                    </a>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="md:hidden">
+              {(() => {
+                const unit = EQUIPMENT_CATALOG[activeCatalogIndex];
+                return (
+                  <article className="bg-[#FFFFFF] rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <div className="relative h-56 bg-gray-100">
+                      <img
+                        src={unit.image}
+                        alt={`Sewa ${unit.name} Tangerang - TERAXCA`}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-3.5 left-3.5 bg-[#1E242B]/90 text-[#F5B800] text-xs font-heading font-bold px-3 py-1 rounded-lg">
+                        {unit.category}
+                      </span>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-heading font-bold text-xl text-[#1E242B] mb-2">
+                        {unit.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                        {unit.description}
+                      </p>
+                      <div className="bg-[#F4F6F8] p-3.5 rounded-xl mb-6 border border-gray-200/60">
+                        <span className="block text-xs font-heading font-bold uppercase tracking-wider text-[#1E242B] mb-1">
+                          Informasi Penggunaan:
+                        </span>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {unit.usage}
+                        </p>
+                      </div>
+                      <a
+                        href={createWhatsAppLink(unit.waMessage)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-2 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-sm px-5 py-3.5 rounded-xl"
+                      >
+                        <MessageCircle className="w-4 h-4 fill-current" />
+                        Tanyakan Harga
+                      </a>
+                    </div>
+                  </article>
+                );
+              })()}
+              <div className="flex justify-center gap-2 mt-5">
+                {EQUIPMENT_CATALOG.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveCatalogIndex(i)}
+                    className={`h-2.5 rounded-full transition-all ${
+                      activeCatalogIndex === i ? 'w-7 bg-[#F5B800]' : 'w-2.5 bg-gray-300'
+                    }`}
+                    aria-label={`Pilih unit ${i + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 5 – HARGA SEWA EXCAVATOR */}
+        <section id="harga-sewa" className="py-16 sm:py-24 bg-[#FFFFFF]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <div className="inline-block px-3 py-1 rounded-lg bg-[#F4F6F8] text-[#1E242B] text-xs font-heading font-bold uppercase tracking-wider mb-3 border border-gray-200">
+                Informasi Tarif
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                Harga Sewa Excavator Terbaru
+              </h2>
+              <p className="mt-3 text-base sm:text-lg text-gray-600">
+                Dapatkan penawaran harga sewa excavator yang transparan dan sesuai kebutuhan proyek Anda.
+              </p>
+            </div>
+
+            <div className="bg-[#FFFFFF] rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#1E242B] text-white">
+                      <th className="py-4 px-6 font-heading font-bold text-sm uppercase tracking-wider">
+                        Jenis Alat Berat
+                      </th>
+                      <th className="py-4 px-6 font-heading font-bold text-sm uppercase tracking-wider">
+                        Durasi Sewa
+                      </th>
+                      <th className="py-4 px-6 font-heading font-bold text-sm uppercase tracking-wider">
+                        Harga Mulai
+                      </th>
+                      <th className="py-4 px-6 font-heading font-bold text-sm uppercase tracking-wider text-right">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {[
+                      { name: 'Mini Excavator', duration: 'Harian / Mingguan / Bulanan' },
+                      { name: 'Excavator Standard', duration: 'Harian / Mingguan / Bulanan' },
+                      { name: 'Excavator Long Arm', duration: 'Harian / Mingguan / Bulanan' },
+                      { name: 'Excavator Breaker', duration: 'Harian / Mingguan / Bulanan' }
+                    ].map((row, idx) => (
+                      <tr key={idx} className="hover:bg-[#F4F6F8]/70 transition-colors">
+                        <td className="py-4 px-6 font-heading font-bold text-[#1E242B] text-base">
+                          {row.name}
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600">
+                          {row.duration}
+                        </td>
+                        <td className="py-4 px-6">
+                          <span className="inline-flex items-center px-3 py-1 rounded-lg bg-[#F5B800]/15 text-[#1E242B] font-heading font-semibold text-xs sm:text-sm border border-[#F5B800]/40">
+                            Hubungi Kami untuk Penawaran Harga
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-right">
+                          <a
+                            href={createWhatsAppLink(`Hallo TERAXCA, saya ingin meminta penawaran harga sewa ${row.name}. Lokasi proyek saya di ${selectedLocation}.`)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm font-heading font-bold text-[#1E242B] hover:text-[#b88900] underline decoration-[#F5B800] decoration-2 underline-offset-4"
+                          >
+                            Cek Tarif
+                            <ChevronRight className="w-4 h-4" />
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-[#F4F6F8] p-6 border-t border-gray-200 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div className="flex items-start gap-3 max-w-xl">
+                  <Info className="w-5 h-5 text-[#1E242B] shrink-0 mt-0.5" />
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    Harga sewa dapat menyesuaikan jenis unit, durasi pemakaian, lokasi proyek, kebutuhan operator, dan biaya mobilisasi.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                  <select
+                    aria-label="Pilih Area Lokasi Proyek"
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="px-3.5 py-3 rounded-xl border border-gray-300 bg-white text-sm text-[#1E242B] font-medium focus:outline-none focus:border-[#F5B800]"
+                  >
+                    {SERVICE_AREAS.map((area) => (
+                      <option key={area} value={area}>{area}</option>
+                    ))}
+                  </select>
+                  <a
+                    href={createWhatsAppLink(`Hallo TERAXCA, saya ingin meminta penawaran harga sewa excavator. Lokasi proyek saya di ${selectedLocation}.`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-sm px-6 py-3.5 rounded-xl shadow-sm transition-all whitespace-nowrap"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-current" />
+                    Minta Penawaran via WhatsApp
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 6 – LAYANAN PEKERJAAN */}
+        <section id="layanan" className="py-16 sm:py-24 bg-[#F4F6F8] border-y border-gray-200/70">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-14">
+              <div className="inline-flex items-center gap-2 text-xs font-heading font-bold uppercase tracking-wider text-[#1E242B] mb-2">
+                <span className="w-6 h-0.5 bg-[#F5B800]"></span>
+                Cakupan Pekerjaan
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                Solusi Pekerjaan Alat Berat untuk Berbagai Proyek
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {SERVICES.map((service, idx) => {
+                const IconComp = service.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="bg-[#FFFFFF] p-7 rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md transition-all relative overflow-hidden group"
+                  >
+                    <div className="absolute top-0 left-0 w-1.5 h-full bg-[#F5B800] opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="w-12 h-12 rounded-xl bg-[#F4F6F8] text-[#1E242B] group-hover:bg-[#F5B800] flex items-center justify-center transition-colors mb-5">
+                      <IconComp className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-heading font-bold text-xl text-[#1E242B] mb-2.5">
+                      {service.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
+                      {service.desc}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 7 – PROYEK / PORTOFOLIO */}
+        <section className="py-16 sm:py-24 bg-[#FFFFFF]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-12">
+              <div className="inline-block px-3 py-1 rounded-lg bg-[#F4F6F8] text-[#1E242B] text-xs font-heading font-bold uppercase tracking-wider mb-3 border border-gray-200">
+                Aplikasi Lapangan
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                Dukungan Alat Berat untuk Berbagai Kebutuhan Proyek
+              </h2>
+              <p className="mt-3 text-base sm:text-lg text-gray-600">
+                Solusi penyewaan excavator untuk mendukung pekerjaan konstruksi, penggalian, dan pengolahan lahan.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="lg:col-span-7 relative rounded-2xl overflow-hidden group h-[340px] sm:h-[440px] bg-gray-100 border border-gray-200">
+                <img
+                  src="https://images.unsplash.com/photo-1580901368919-7738efb0f87e?auto=format&fit=crop&q=80&w=1200"
+                  alt="Ilustrasi excavator sedang menggali tanah pada proyek konstruksi"
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1E242B]/90 via-[#1E242B]/20 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 p-6 sm:p-8">
+                  <span className="inline-block bg-[#F5B800] text-[#1E242B] text-xs font-heading font-bold px-2.5 py-1 rounded-md mb-2">
+                    Penggalian &amp; Tanah
+                  </span>
+                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-white">
+                    Excavator Sedang Menggali Tanah
+                  </h3>
+                  <p className="text-gray-300 text-sm mt-1">
+                    Mendukung efisiensi pengerukan dan pemindahan material tanah di area kerja.
+                  </p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+                <div className="relative rounded-2xl overflow-hidden group h-[208px] bg-gray-100 border border-gray-200">
+                  <img
+                    src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=800"
+                    alt="Ilustrasi excavator untuk pekerjaan pondasi bangunan"
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#1E242B]/90 via-[#1E242B]/25 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 p-5">
+                    <h3 className="font-heading font-bold text-lg text-white">
+                      Excavator untuk Pekerjaan Pondasi
+                    </h3>
+                    <p className="text-gray-300 text-xs mt-0.5">
+                      Galian struktur pondasi yang rapi sesuai perencanaan konstruksi.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="relative rounded-2xl overflow-hidden group h-[208px] bg-gray-100 border border-gray-200">
+                    <img
+                      src="https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&q=80&w=600"
+                      alt="Ilustrasi excavator untuk perataan lahan"
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E242B]/90 via-[#1E242B]/30 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 p-4">
+                      <h3 className="font-heading font-bold text-base text-white leading-snug">
+                        Excavator untuk Perataan Lahan
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="relative rounded-2xl overflow-hidden group h-[208px] bg-gray-100 border border-gray-200">
+                    <img
+                      src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"
+                      alt="Ilustrasi excavator di area proyek konstruksi"
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#1E242B]/90 via-[#1E242B]/30 to-transparent"></div>
+                    <div className="absolute bottom-0 left-0 p-4">
+                      <h3 className="font-heading font-bold text-base text-white leading-snug">
+                        Excavator di Area Proyek Konstruksi
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4">
+              *Foto di atas merupakan ilustrasi penggunaan alat berat pada pekerjaan konstruksi dan pengolahan lahan.
+            </p>
+          </div>
+        </section>
+
+        {/* SECTION 8 – CARA PEMESANAN */}
+        <section className="py-16 sm:py-24 bg-[#1E242B] text-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16">
+              <span className="text-xs font-heading font-bold uppercase tracking-widest text-[#F5B800]">
+                Alur Penyewaan
+              </span>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-white mt-2">
+                Cara Mudah Menyewa Excavator di TERAXCA
+              </h2>
+            </div>
+
+            <div className="relative">
+              <div className="hidden lg:block absolute top-8 left-12 right-12 h-0.5 bg-white/15"></div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-6">
+                {ORDER_STEPS.map((item, idx) => (
+                  <div key={idx} className="relative flex lg:flex-col items-start lg:items-center lg:text-center gap-5 lg:gap-0">
+                    {idx !== ORDER_STEPS.length - 1 && (
+                      <div className="lg:hidden absolute top-16 left-8 bottom-[-32px] w-0.5 bg-white/15"></div>
+                    )}
+
+                    <div className="relative z-10 w-16 h-16 rounded-2xl bg-[#F5B800] text-[#1E242B] font-heading font-extrabold text-xl flex items-center justify-center shadow-lg shrink-0 lg:mb-6">
+                      {item.step}
+                    </div>
+
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 w-full h-full">
+                      <h3 className="font-heading font-bold text-lg text-white mb-2">
+                        {item.title}
+                      </h3>
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 9 – AREA LAYANAN */}
+        <section id="area-layanan" className="py-16 sm:py-24 bg-[#F4F6F8] border-b border-gray-200/70">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-7">
+                <div className="inline-flex items-center gap-2 text-xs font-heading font-bold uppercase tracking-wider text-[#1E242B] mb-2">
+                  <span className="w-6 h-0.5 bg-[#F5B800]"></span>
+                  Jangkauan Operasional
+                </div>
+                <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                  Area Layanan TERAXCA
+                </h2>
+                <p className="mt-3 text-base sm:text-lg text-gray-600 mb-8">
+                  Melayani kebutuhan penyewaan excavator di Tangerang dan berbagai wilayah sekitarnya.
+                </p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                  {SERVICE_AREAS.map((area, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-[#FFFFFF] px-4 py-3 rounded-xl border border-gray-200/90 flex items-center gap-2.5 shadow-xs"
+                    >
+                      <MapPin className="w-4 h-4 text-[#F5B800] shrink-0" />
+                      <span className="text-sm font-medium text-[#1E242B]">{area}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="lg:col-span-5">
+                <div className="bg-[#FFFFFF] p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <span className="text-xs font-heading font-bold uppercase tracking-wider text-gray-500">
+                        Cakupan Wilayah
+                      </span>
+                      <h3 className="font-heading font-bold text-lg text-[#1E242B]">
+                        Tangerang Raya, Provinsi Banten
+                      </h3>
+                    </div>
+                    <span className="px-3 py-1 rounded-full bg-[#F5B800]/20 text-[#1E242B] text-xs font-bold">
+                      Banten
+                    </span>
+                  </div>
+
+                  <div className="relative bg-[#F4F6F8] rounded-xl p-4 border border-gray-200/80 overflow-hidden">
+                    <svg viewBox="0 0 400 280" className="w-full h-auto" role="img" aria-label="Peta Ilustrasi Area Layanan Tangerang Banten">
+                      <path d="M0 0 H400 V55 Q280 70 180 48 T0 60 Z" fill="#E2E8F0" />
+                      <text x="200" y="32" textAnchor="middle" fill="#64748B" fontSize="11" fontWeight="600">
+                        LAUT JAWA
+                      </text>
+
+                      <path
+                        d="M35 65 L195 55 L215 110 L230 165 L185 235 L95 245 L40 190 Z"
+                        fill="#FFFFFF"
+                        stroke="#1E242B"
+                        strokeWidth="2"
+                      />
+                      <text x="115" y="145" textAnchor="middle" fill="#1E242B" fontSize="12" fontWeight="700">
+                        Kab. Tangerang
+                      </text>
+                      <text x="115" y="162" textAnchor="middle" fill="#64748B" fontSize="9">
+                        Balaraja • Cikupa • Tigaraksa • Pasar Kemis
+                      </text>
+
+                      <path
+                        d="M195 55 L295 62 L305 135 L215 135 Z"
+                        fill="#F5B800"
+                        fillOpacity="0.25"
+                        stroke="#1E242B"
+                        strokeWidth="2"
+                      />
+                      <text x="252" y="102" textAnchor="middle" fill="#1E242B" fontSize="11" fontWeight="700">
+                        Kota Tangerang
+                      </text>
+
+                      <path
+                        d="M215 135 L315 135 L325 225 L225 235 L205 180 Z"
+                        fill="#F5B800"
+                        fillOpacity="0.45"
+                        stroke="#1E242B"
+                        strokeWidth="2"
+                      />
+                      <text x="268" y="180" textAnchor="middle" fill="#1E242B" fontSize="11" fontWeight="700">
+                        Tangerang Selatan
+                      </text>
+                      <text x="268" y="195" textAnchor="middle" fill="#1E242B" fontSize="9">
+                        BSD • Serpong • Cisauk
+                      </text>
+
+                      <circle cx="362" cy="242" r="16" fill="#1E242B" />
+                      <text x="362" y="246" textAnchor="middle" fill="#F5B800" fontSize="11" fontWeight="800">
+                        U
+                      </text>
+                    </svg>
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-4 leading-relaxed">
+                    Koordinasi pengiriman unit alat berat mencakup seluruh kawasan industri, perumahan, dan proyek infrastruktur di wilayah Tangerang dan sekitarnya.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 10 – TESTIMONI PELANGGAN */}
+        <section className="py-16 sm:py-24 bg-[#FFFFFF]">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <div className="inline-block px-3 py-1 rounded-lg bg-[#F4F6F8] text-[#1E242B] text-xs font-heading font-bold uppercase tracking-wider mb-3 border border-gray-200">
+                Pengalaman Pelanggan
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                Kepercayaan Pelanggan adalah Prioritas Kami
+              </h2>
+            </div>
+
+            <div className="bg-[#F4F6F8] rounded-2xl border-2 border-dashed border-gray-300 p-8 sm:p-12 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-[#1E242B] text-[#F5B800] flex items-center justify-center mx-auto mb-5">
+                <MessageCircle className="w-7 h-7" />
+              </div>
+              <h3 className="font-heading font-bold text-xl text-[#1E242B] mb-2">
+                Area Ulasan &amp; Pengalaman Proyek Pelanggan
+              </h3>
+              <p className="text-gray-600 text-sm sm:text-base max-w-xl mx-auto leading-relaxed mb-6">
+                Bagian ini disediakan untuk menampilkan dokumentasi ulasan asli dari kontraktor dan pelanggan yang telah menggunakan layanan penyewaan alat berat melalui TERAXCA.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto text-left">
+                {[1, 2].map((slot) => (
+                  <div key={slot} className="bg-white p-5 rounded-xl border border-gray-200/80 opacity-85">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <span className="block text-xs font-bold uppercase tracking-wider text-gray-400">
+                          Nama Pelanggan
+                        </span>
+                        <span className="text-sm font-heading font-semibold text-gray-500">
+                          [Akan Diperbarui dari Ulasan Terverifikasi]
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-1 rounded-md bg-[#F4F6F8] text-[11px] font-semibold text-gray-500">
+                        Jenis Pekerjaan
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 italic">
+                      &ldquo;Catatan pengalaman penyewaan excavator dan koordinasi proyek di area Tangerang akan ditampilkan di sini.&rdquo;
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 11 – FAQ */}
+        <section className="py-16 sm:py-24 bg-[#F4F6F8] border-t border-gray-200/70">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 text-xs font-heading font-bold uppercase tracking-wider text-[#1E242B] mb-2">
+                <HelpCircle className="w-4 h-4 text-[#F5B800]" />
+                Informasi &amp; Bantuan
+              </div>
+              <h2 className="font-heading font-bold text-3xl sm:text-4xl text-[#1E242B] tracking-tight">
+                Pertanyaan yang Sering Diajukan
+              </h2>
+            </div>
+
+            <div className="space-y-3.5">
+              {FAQ_ITEMS.map((faq, index) => {
+                const isOpen = openFaqIndex === index;
+                return (
+                  <div
+                    key={index}
+                    className={`bg-[#FFFFFF] rounded-2xl border transition-all ${
+                      isOpen ? 'border-[#F5B800] shadow-sm' : 'border-gray-200/90'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleFaq(index)}
+                      className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 focus:outline-none"
+                      aria-expanded={isOpen}
+                    >
+                      <span className="font-heading font-bold text-base sm:text-lg text-[#1E242B]">
+                        {faq.question}
+                      </span>
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                          isOpen ? 'bg-[#F5B800] text-[#1E242B]' : 'bg-[#F4F6F8] text-gray-600'
+                        }`}
+                      >
+                        <ChevronDown
+                          className={`w-5 h-5 transition-transform duration-200 ${
+                            isOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </div>
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-6 pb-5 pt-1 text-gray-600 text-sm sm:text-base leading-relaxed border-t border-gray-100">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 12 – FINAL CALL TO ACTION */}
+        <section className="py-16 sm:py-20 bg-[#FFFFFF]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="relative bg-[#1E242B] rounded-3xl overflow-hidden shadow-xl">
+              <div className="h-2 w-full bg-[#F5B800]"></div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
+                <div className="lg:col-span-7 p-8 sm:p-12 lg:p-14">
+                  <span className="inline-block px-3 py-1 rounded-lg bg-[#F5B800]/15 text-[#F5B800] text-xs font-heading font-bold uppercase tracking-wider mb-4">
+                    Mulai Konsultasi Proyek
+                  </span>
+                  <h2 className="font-heading font-extrabold text-3xl sm:text-4xl lg:text-[42px] text-white leading-tight mb-4">
+                    Butuh Excavator untuk Proyek Anda?
+                  </h2>
+                  <p className="text-gray-300 text-base sm:text-lg leading-relaxed mb-8 max-w-xl">
+                    Konsultasikan kebutuhan alat berat Anda bersama TERAXCA. Dapatkan informasi unit dan penawaran penyewaan dengan mudah.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <a
+                      href={createWhatsAppLink("Hallo TERAXCA, saya ingin menanyakan informasi sewa excavator untuk kebutuhan proyek saya.")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2.5 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-base px-7 py-4 rounded-xl shadow-md transition-all"
+                    >
+                      <MessageCircle className="w-5 h-5 fill-current" />
+                      Konsultasi via WhatsApp
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection('alat-berat')}
+                      className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-heading font-semibold text-base px-7 py-4 rounded-xl transition-all"
+                    >
+                      Lihat Pilihan Alat Berat
+                    </button>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-5 relative h-64 sm:h-80 lg:h-full min-h-[320px]">
+                  <img
+                    src="https://images.unsplash.com/photo-1579412690850-bd41cd0af397?auto=format&fit=crop&q=80&w=900"
+                    alt="Excavator siap melayani proyek di Tangerang"
+                    loading="lazy"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-[#1E242B] via-[#1E242B]/40 to-transparent"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* SECTION 13 – FOOTER */}
+      <footer id="kontak" className="bg-[#1E242B] text-white pt-16 pb-8 border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-white/10">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-white p-1.5 rounded-xl">
+                  <ExcavatorLogoIcon className="w-7 h-7" />
+                </div>
+                <span className="font-heading font-extrabold text-2xl tracking-tight text-white">
+                  TERA<span className="text-[#F5B800]">X</span>CA
+                </span>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Solusi penyewaan excavator dan alat berat untuk kebutuhan proyek konstruksi di Tangerang dan sekitarnya.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-heading font-bold text-base text-white uppercase tracking-wider mb-4">
+                Navigasi
+              </h3>
+              <ul className="space-y-2.5 text-sm text-gray-400">
+                {[
+                  { label: 'Beranda', id: 'beranda' },
+                  { label: 'Alat Berat', id: 'alat-berat' },
+                  { label: 'Layanan', id: 'layanan' },
+                  { label: 'Harga Sewa', id: 'harga-sewa' },
+                  { label: 'Tentang Kami', id: 'tentang-kami' },
+                  { label: 'Kontak', id: 'kontak' }
+                ].map((nav) => (
+                  <li key={nav.id}>
+                    <a
+                      href={`#${nav.id}`}
+                      onClick={(e) => { e.preventDefault(); scrollToSection(nav.id); }}
+                      className="hover:text-[#F5B800] transition-colors"
+                    >
+                      {nav.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-heading font-bold text-base text-white uppercase tracking-wider mb-4">
+                Layanan
+              </h3>
+              <ul className="space-y-2.5 text-sm text-gray-400">
+                {[
+                  'Sewa Excavator',
+                  'Sewa Mini Excavator',
+                  'Sewa Excavator Breaker',
+                  'Sewa Bulldozer',
+                  'Sewa Vibro Roller'
+                ].map((srv) => (
+                  <li key={srv}>
+                    <a
+                      href={createWhatsAppLink(`Hallo TERAXCA, saya tertarik informasi ${srv}. Mohon info ketersediaan unit.`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[#F5B800] transition-colors"
+                    >
+                      {srv}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-heading font-bold text-base text-white uppercase tracking-wider mb-4">
+                Kontak
+              </h3>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li className="flex items-center gap-2.5">
+                  <ExternalLink className="w-4 h-4 text-[#F5B800] shrink-0" />
+                  <a href="https://teraxca.com" className="hover:text-white transition-colors">
+                    teraxca.com
+                  </a>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <MapPin className="w-4 h-4 text-[#F5B800] shrink-0" />
+                  <span>Tangerang, Banten</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-[#F5B800] shrink-0" />
+                  <a
+                    href={createWhatsAppLink("Hallo TERAXCA, saya ingin menanyakan informasi sewa excavator untuk kebutuhan proyek saya.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#F5B800] hover:underline font-medium"
+                  >
+                    WhatsApp: +62 NOMORWHATSAPP
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+            <p>Copyright © 2026 TERAXCA. All Rights Reserved.</p>
+            <p>Layanan Pemasaran &amp; Kemitraan Penyewaan Alat Berat – Tangerang, Banten</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* FLOATING WHATSAPP BUTTON */}
+      <a
+        href={createWhatsAppLink("Hallo TERAXCA, saya ingin menanyakan informasi sewa excavator untuk kebutuhan proyek saya.")}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Konsultasi via WhatsApp TERAXCA"
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 bg-[#F5B800] hover:bg-[#e0a800] text-[#1E242B] font-heading font-bold text-sm px-5 py-3.5 rounded-full shadow-2xl border-2 border-[#1E242B]/15 transition-all transform hover:scale-105"
+      >
+        <MessageCircle className="w-5 h-5 fill-current" />
+        <span className="hidden sm:inline">Chat WhatsApp</span>
+      </a>
+    </div>
   );
 }
